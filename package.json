@@ -1,0 +1,38 @@
+{
+  "name": "reposync",
+  "version": "1.0.0",
+  "description": "Detect config drift across polyrepo setups. Scan your repos for inconsistent configs, versions, and conventions.",
+  "main": "dist/index.js",
+  "bin": {
+    "reposync": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "node --test dist/**/*.test.js",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "polyrepo",
+    "config-drift",
+    "microservices",
+    "consistency",
+    "devops",
+    "cli"
+  ],
+  "author": "sulthonzh",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sulthonzh/reposync"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "dist"
+  ],
+  "devDependencies": {
+    "@types/node": "^20.19.41",
+    "typescript": "^6.0.3"
+  }
+}
