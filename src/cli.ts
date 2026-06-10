@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { discoverRepos, scan, formatDriftTable, formatJson } from './index';
+import { discoverRepos, scan, formatDriftTable, formatJson, formatMarkdown } from './index';
 import { resolve } from 'path';
 
 const args = process.argv.slice(2);
@@ -19,6 +19,7 @@ COMMANDS
 
 OPTIONS
   --json          Output as JSON
+  --markdown      Output as Markdown table
   --depth <n>     Search depth for repos (default: 1)
   --ignore <pkg>  Ignore specific packages (can be used multiple times)
   --severity      Minimum severity level: high|medium|low (default: low)
@@ -38,6 +39,8 @@ const positional: string[] = [];
 for (let i = 0; i < args.length; i++) {
   if (args[i] === '--json') {
     flags.json = true;
+  } else if (args[i] === '--markdown') {
+    flags.markdown = true;
   } else if (args[i] === '--depth' && args[i + 1]) {
     flags.depth = args[++i];
   } else if (args[i] === '--help' || args[i] === '-h') {
@@ -93,7 +96,13 @@ try {
     };
 
     const result = scan(repos, scanOptions);
-    console.log(flags.json ? formatJson(result) : formatDriftTable(result));
+    if (flags.markdown) {
+      console.log(formatMarkdown(result));
+    } else if (flags.json) {
+      console.log(formatJson(result));
+    } else {
+      console.log(formatDriftTable(result));
+    }
 
     if (result.drifts.length > 0) {
       process.exit(1);

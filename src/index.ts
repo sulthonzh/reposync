@@ -374,3 +374,61 @@ export function formatJson(result: ScanResult): string {
     severityThreshold: 'low',
   }, null, 2);
 }
+
+export function formatMarkdown(result: ScanResult): string {
+  const lines: string[] = [];
+  lines.push('# reposync — config drift report');
+  lines.push('');
+
+  // Summary table
+  lines.push('| Metric | Value |');
+  lines.push('|--------|-------|');
+  lines.push(`| Repos scanned | ${result.repos.length} |`);
+  lines.push(`| Configs checked | ${result.scannedConfigs.length} |`);
+  lines.push(`| Drifts found | ${result.filteredDriftCount} |`);
+
+  if (result.originalDriftCount !== result.filteredDriftCount) {
+    lines.push(`| Drifts filtered out | ${result.originalDriftCount - result.filteredDriftCount} |`);
+  }
+  lines.push('');
+
+  if (result.drifts.length === 0) {
+    lines.push('✅ **No drift detected.** All repos are consistent.');
+    return lines.join('\n');
+  }
+
+  // Drifts table
+  lines.push('## Drifts');
+  lines.push('');
+  lines.push('| Severity | Config | Field | Values |');
+  lines.push('|----------|--------|-------|--------|');
+
+  for (const drift of result.drifts) {
+    const severityBadge = drift.severity === 'high' ? '🔴 High' : drift.severity === 'medium' ? '🟡 Medium' : '🔵 Low';
+    const valueParts: string[] = [];
+    const valueGroups: Record<string, string[]> = {};
+    for (const [repo, vals] of Object.entries(drift.values)) {
+      const key = vals.join(', ');
+      if (!valueGroups[key]) valueGroups[key] = [];
+      valueGroups[key].push(repo);
+    }
+    for (const [value, repoNames] of Object.entries(valueGroups)) {
+      const displayValue = value.length > 50 ? value.slice(0, 47) + '...' : value;
+      valueParts.push(`${displayValue} ← ${repoNames.join(', ')}`);
+    }
+    lines.push(`| ${severityBadge} | ${drift.configType} | \`${drift.field}\` | ${valueParts.join('<br>')} |`);
+  }
+
+  lines.push('');
+
+  // Configs scanned
+  lines.push('<details><summary>Configs scanned</summary>');
+  lines.push('');
+  for (const cfg of result.scannedConfigs) {
+    lines.push(`- ${cfg}`);
+  }
+  lines.push('');
+  lines.push('</details>');
+
+  return lines.join('\n');
+}

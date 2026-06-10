@@ -5,7 +5,7 @@ import { join } from 'path';
 import { createRequire } from 'module';
 
 const require = createRequire(import.meta.url);
-const { discoverRepos, scan, formatDriftTable, formatJson } = require('../src/index.js');
+const { discoverRepos, scan, formatDriftTable, formatJson, formatMarkdown } = require('../dist/index.js');
 
 const TMP = join('/tmp', 'reposync-test-' + Date.now());
 
@@ -147,5 +147,32 @@ describe('reposync', () => {
     const singleRepo = join(TMP, 'service-a');
     const singleResult = scan([{ name: 'service-a', path: singleRepo }]);
     assert.equal(singleResult.drifts.length, 0);
+  });
+
+  it('formats markdown report with drifts', () => {
+    const repos = discoverRepos(TMP);
+    const result = scan(repos);
+    const md = formatMarkdown(result);
+    assert.ok(md.includes('# reposync'), 'has heading');
+    assert.ok(md.includes('## Drifts'), 'has drifts section');
+    assert.ok(md.includes('| Severity |'), 'has table header');
+    assert.ok(md.includes('typescript'), 'mentions typescript');
+    assert.ok(md.includes('Configs scanned'), 'has details section');
+  });
+
+  it('formats markdown with no drifts', () => {
+    const singleRepo = join(TMP, 'service-a');
+    const result = scan([{ name: 'service-a', path: singleRepo }]);
+    const md = formatMarkdown(result);
+    assert.ok(md.includes('No drift detected'), 'shows no drift message');
+    assert.ok(!md.includes('## Drifts'), 'no drifts section when clean');
+  });
+
+  it('markdown includes severity badges', () => {
+    const repos = discoverRepos(TMP);
+    const result = scan(repos);
+    const md = formatMarkdown(result);
+    assert.ok(md.includes('🔴') || md.includes('High'), 'has high severity');
+    assert.ok(md.includes('🟡') || md.includes('Medium'), 'has medium severity');
   });
 });
