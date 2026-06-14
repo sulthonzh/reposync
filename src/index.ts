@@ -1,5 +1,5 @@
 import { readFileSync, existsSync, readdirSync, statSync } from 'fs';
-import { join, resolve } from 'path';
+import { join } from 'path';
 
 export interface RepoInfo {
   name: string;
@@ -69,11 +69,6 @@ export function discoverRepos(rootDir: string, depth: number = 1): RepoInfo[] {
   return repos;
 }
 
-function extractVersion(dep: unknown): string {
-  if (typeof dep === 'string') return dep;
-  return String(dep);
-}
-
 function compareDeps(repos: RepoInfo[], depType: string, drifts: DriftItem[], ignorePackages: string[] = []): void {
   const depVersions: Record<string, Record<string, string>> = {};
 
@@ -84,9 +79,9 @@ function compareDeps(repos: RepoInfo[], depType: string, drifts: DriftItem[], ig
 
     for (const [dep, version] of Object.entries(pkg[depType])) {
       if (ignorePackages.includes(dep)) continue;
-      
+
       if (!depVersions[dep]) depVersions[dep] = {};
-      depVersions[dep][repo.name] = extractVersion(version);
+      depVersions[dep][repo.name] = String(version);
     }
   }
 
@@ -259,13 +254,11 @@ export function scan(repos: RepoInfo[], options: {
   const drifts: DriftItem[] = [];
   const scannedConfigs: string[] = [];
 
-  // Filter out ignored packages before comparing
   const filteredRepos = repos.filter(repo => {
     const pkgPath = join(repo.path, 'package.json');
     const pkg = readJsonFile(pkgPath) as Record<string, Record<string, unknown>> | null;
     if (!pkg) return false;
-    
-    // Skip repos that have ignored packages in dependencies/devDependencies
+
     for (const depType of ['dependencies', 'devDependencies'] as const) {
       if (pkg[depType]) {
         for (const depName of Object.keys(pkg[depType])) {
@@ -299,7 +292,6 @@ export function scan(repos: RepoInfo[], options: {
     }
   }
 
-  // Filter drifts based on severity threshold
   const filteredDrifts = drifts.filter(drift => {
     const severityOrder = { high: 3, medium: 2, low: 1 };
     const thresholdOrder = { high: 3, medium: 2, low: 1 }[severityThreshold];
@@ -380,7 +372,6 @@ export function formatMarkdown(result: ScanResult): string {
   lines.push('# reposync — config drift report');
   lines.push('');
 
-  // Summary table
   lines.push('| Metric | Value |');
   lines.push('|--------|-------|');
   lines.push(`| Repos scanned | ${result.repos.length} |`);
@@ -397,7 +388,6 @@ export function formatMarkdown(result: ScanResult): string {
     return lines.join('\n');
   }
 
-  // Drifts table
   lines.push('## Drifts');
   lines.push('');
   lines.push('| Severity | Config | Field | Values |');
@@ -421,7 +411,6 @@ export function formatMarkdown(result: ScanResult): string {
 
   lines.push('');
 
-  // Configs scanned
   lines.push('<details><summary>Configs scanned</summary>');
   lines.push('');
   for (const cfg of result.scannedConfigs) {
