@@ -1,5 +1,5 @@
 {
-  "name": "reposync",
+  "name": "@sulthonzh/reposync",
   "version": "1.0.0",
   "description": "Detect config drift across polyrepo setups. Scan your repos for inconsistent configs, versions, and conventions.",
   "main": "dist/index.js",
@@ -45,5 +45,8 @@
   "homepage": "https://github.com/sulthonzh/reposync#readme",
   "bugs": {
     "url": "https://github.com/sulthonzh/reposync/issues"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
